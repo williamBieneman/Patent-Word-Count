@@ -10,7 +10,7 @@ from requests.utils import quote
 
 print('USPTO Patent Search\n')
 
-
+## ⬇︎ asks for the fields that the user would like to search, then gets their query for it.
 parameters={}
 parIn = ''
 while (parIn != '0') or (parIn != 'EXIT'):
@@ -46,12 +46,12 @@ while (parIn != '0') or (parIn != 'EXIT'):
     else:
         print('Choose a listed value.')
 
-#^^ allows user to input any values they wish ^^
-
+## ⬇︎ formats the parameters for a URL
 for x in parameters:
     parameters[x]=quote(parameters[x])
 parameters = ((((((str(parameters).replace('\', \'','&')).replace(': ','=')).replace('{','')).replace('}','')).replace('\'','')).replace(' ',''))
 
+## ⬇︎ requests from the USPTO Bulk Search and Download API and returns the JSON
 bulk_search = requests.get('https://developer.uspto.gov/ibd-api/v1/patent/application?',parameters)
 bulk_search.raise_for_status
 print(bulk_search.text)
