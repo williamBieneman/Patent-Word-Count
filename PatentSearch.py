@@ -1,3 +1,4 @@
+# package to search for patent numbers based on criteria
 
 import requests
 import json
