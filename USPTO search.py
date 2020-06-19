@@ -47,3 +47,6 @@ print("accessing: ",url,sep='')
 
 with requests.get(url) as response:
     print(response.status_code)
+
+
+## this code is bad
