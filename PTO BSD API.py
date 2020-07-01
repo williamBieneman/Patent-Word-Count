@@ -46,6 +46,16 @@ while (parIn != '0') or (parIn != 'EXIT'):
     else:
         print('Choose a listed value.')
 
+parIn = ''
+fields = []
+while parIn not in ['EXIT','0']:
+    parIn = input('What fields would you like returned? The default is only the patent numbers.\nType "EXIT" or "0" to use only the default')
+    if parIn not in ['EXIT','0']
+        fields.append(parIn)
+
+if fields == []:
+    fields.append("patent_number")
+
 ## ⬇︎ formats the parameters for a URL
 for x in parameters:
     parameters[x]=quote(parameters[x])
