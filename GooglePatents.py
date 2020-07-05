@@ -16,6 +16,9 @@ if status_code != 200:
     error = 'An error occured connecting to the web.\n      Status code: ' + str(status_code) + '. URL: ' + str(patent_page.url)
     raise RuntimeError(error).with_traceback(None)
 
+## ⬆︎ gets the patents.google.com page for the relevant patent
+## ⬇︎ parses it
+
 patent_soup = BeautifulSoup(patent_page.text,'html.parser')
 
 properties = [('span', {'itemprop':'title'}), ('dd', {'itemprop':'publicationNumber'}), ('dd', {'itemprop':'applicationNumber'}),

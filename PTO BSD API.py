@@ -1,5 +1,9 @@
 #USPTO Patent Grants and Applications Word Counter and Search, William Bieneman, April 18 2020
 
+## the documentation for this API can be found at:
+## https://developer.uspto.gov/ibd-api/
+## and not https://developer.uspto.gov/ibd-api-docs/ as the site directs you to. I really don't know why they link to that page because it's just a 404.
+
 ### THIS FILE FINDS ALL PATENTS OF WHICHEVER CRITERIA ARE ENTETERED.
 ### THE RETURNED VALUE IS A JSON DOCUMENT WITH VARIOUS ATTRIBUTES ABOUT
 ### DOCUMENTS MATCHING THE CRITERIA GIVEN.
@@ -49,8 +53,8 @@ while (parIn != '0') or (parIn != 'EXIT'):
 parIn = ''
 fields = []
 while parIn not in ['EXIT','0']:
-    parIn = input('What fields would you like returned? The default is only the patent numbers.\nType "EXIT" or "0" to use only the default')
-    if parIn not in ['EXIT','0']
+    parIn = input('What fields would you like returned? The default is only the patent numbers.\nType "EXIT" or "0" to use only the default. \n')
+    if parIn not in ['EXIT','0']:
         fields.append(parIn)
 
 if fields == []:
