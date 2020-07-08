@@ -1,3 +1,4 @@
+# patent_search.py created by William Bieneman, June 2020
 """This module defines functions for finding patent numbers from given
 criteria, patents from patent numbers, and more.
 """
@@ -24,8 +25,8 @@ def search_for(criteria={}):
     # Checks the quality of the criteria entered.
     for criterion in criteria:
         if criterion not in fields:
-            print(criterion,':',criteria[criterion],''' has been removed from \
-            the search terms as it is not a permitted search term.''', sep='')
+            print(criterion,':',criteria[criterion], 'has been removed from \
+             the search terms as it is not a permitted search term.', sep='')
         elif criterion in fields:
             parameters.update({fields.pop(fields.index(criterion)):
                                 criteria[criterion]})
@@ -56,14 +57,15 @@ def search_for(criteria={}):
         search_results = json.loads(search_results.text)
         for item in search_results['response']['docs']:
             results.append(item)
-        print('Recieved ', str(start), ' of ', str(num_found), ' - ',
-              str(int((start/num_found)*100)), '% complete.', sep='')
+        print(f'Recieved {start} of {num_found} - {int((start/num_found)*100)}\
+        % complete.')
         start += 100
-    print('Complete!')
+    print(f'Recieved {num_found} of {num_found} - 100% complete!')
     return results
 
 def get_numbers(criteria={}):
-    """Returns a list of application numbers for the given criteria."""
+    """Returns a list of application numbers for the given criteria.
+    Entering {"fields"} will return a list of fields."""
     results = search_for(criteria)
     numbers = []
     for item in results:
@@ -80,14 +82,29 @@ def get_numbers_from(results):
     return numbers
 
 ## (adapted from GooglePatents.py)
-def get_patent(*, patent_number=None, document_ID=None):
+def get_patent(*, patent_number=None, document_ID=None, return_fields=False):
     """Enter either a patent_number OR document_ID as a keyword argument
     to get the matching patent page from Google Patents. If you enter both,
-    or neither, nothing will happen."""
+    or neither, nothing will happen.
+    Data will be returned as a dictionary.
+    Enter return_fields = True to get a list of returned values."""
+    patent = {
+              'title' : None,
+              'publicationNumber' : None,
+              'applicationNumber' : None,
+              'inventor' : None,
+              'assigneeCurrent' : None,
+              'assigneeOriginal' : None,
+              'filingDate' : None,
+              'abstract' : None,
+              'description' : None,
+              'claims' : None
+              }
+    if return_fields == True:
+        return patent.keys()
     # These if statements decide how to format the url, as patent get_numbers
-    # and document IDs require different formats. If both are entered it
-    # *prints* an error message, and if no input is entered it does nothing.
-    patent = []
+    # and document IDs require different formats. If both are entered or if
+    # nothing is entered, it raises a ValueError.
     if (patent_number != None) and (document_ID == None):
         url = 'https://patents.google.com/patent/US'
         full_url = url + patent_number
@@ -95,10 +112,12 @@ def get_patent(*, patent_number=None, document_ID=None):
         url = 'https://patents.google.com/patent/'
         full_url = url + document_ID
     elif (document_ID != None) and (patent_number != None):
-        print('Only enter patent_number OR document_ID.')
+        raise ValueError('Only enter patent_number OR document_ID.')
         return
     else:
+        raise ValueError('Enter a patent_number or document_ID!')
         return
+    # Gets the page, checks for 200 response.
     patent_page = requests.get(full_url)
     patent_page.raise_for_status()
     ## parses the returned page
@@ -113,14 +132,78 @@ def get_patent(*, patent_number=None, document_ID=None):
                   ('time', {'itemprop':'filingDate'}),
                   ('time', {'itemprop':'publicationDate'})
                   ]
+    # This adds various metadata (as seen above in properties).
     for property in properties:
         property_contents = patent_soup.find(property).contents
-        patent.append((property[1]['itemprop'], property_contents))
-    patent.append(patent_soup.find(class_='abstract').contents[0])
+        patent.update({property[1]['itemprop']:property_contents})
+    # Adds the abstract.
+    patent.update({'abstract':patent_soup.find(class_='abstract').contents[0]})
+    # Adds the description (which is split into many elements in the HTML).
+    description = ''
     for y in patent_soup.find(class_='description').descendants:
-    	patent.append(y.string)
+    	description.append(y.string)
+    patent.update({'description':description})
+    # And finally, adds the claims.
+    claims = ''
     for result in patent_soup(class_='claim-text'):
     	for i in result.contents:
-    		print(i.string, end='')
-    	patent.append('\n')
+    		claims.append(i.string)
+    	claims.append('\n')
+    patent.update({'claims':claims})
     return patent
+
+## (adapted from basic word counter.py)
+def count_words(text: str, /, min_return = 0):
+    """Counts the number of words in the text, and counts the number of
+    instances of each word. min_return sets the minimum number of occurances
+    of a word to be recorded and returned."""
+    # Takes the entered text and reformats it to be easier to count.
+    fixed_text = text.lower()
+    punctuation = [
+                    '.', ',', '?', '/', '<', '>', ':', ';', '"', "'", '[',\
+                    ']', '{', '}', "\\", '|', '!', '@', '#', '$', '%', '^',\
+                    '&', '*', '(', ')', '-', '_', '+', '=', '~', '`'
+                    ]
+    for i in punctuation:
+        fixed_text=fixed_text.replace(i,'')
+    # Makes a list of every word.
+    word_list = fixed_text.split(' ')
+    length = len(word_list)
+    n = 0
+    word_counts = {}
+    counted_words = []
+    # Counts each word in the list
+    for n in range(0,length):
+        word = word_list[n]
+        if counted_words.count(word) == 0:
+            count = word_list.count(word)
+            word_counts.update({word : count})
+            counted_words.append(word)
+    word_counts.update({'Total words':n})
+    # This sorting was cleaner when word_counts was a list of tuples,
+    # but I think having it be a dictionary is worth the comlications.
+    sorted_word_counts = {}
+    for x in sorted(word_counts, reverse = True):
+        sorted_word_counts.update(x, word_counts[x])
+    word_counts = sorted_wourd_counts
+    # This line made more sense when word_counts was a list of tuples,
+    # but now it is just finding the first key of word_counts (skipping the
+    # total), and finding the value associated with it.
+    most_counted_word = word_counts[word_counts.keys()[1]]
+    # Similarly, this just findes the
+    most_counted_number = word_counts.keys()[1]
+    uncounted = []
+    if min_return == 0:
+        return word_counts
+    elif min_return < 0:
+        raise ValueError("min_return must be more than 0.")
+    elif min_return > 0:
+        for count, word in word_counts:
+            if count >= min_return:
+                pass
+            elif count < min_return:
+                uncounted.append(word_counts.pop(count))
+    # I just realized that since the most counted word, its count, and the
+    # list of uncouted words aren't returned, setting them is kinda useless,
+    # but they may be used in the future, so I'm keeping them in for now.
+    return word_counts
