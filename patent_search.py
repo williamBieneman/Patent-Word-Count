@@ -61,7 +61,7 @@ def search_for(criteria={}):
         est_hou = int(est_min/60)
         est_min = int(est_min%est_hou)
     print(f'{num_found} results found! Estimated time: ',\
-          f'{est_hou}:{est_min}:{est_sec}', sep='')
+          f'{est_hou:0>2}:{est_min:0>2}:{est_sec:0>2}', sep='')
     results = []
     rows = 100
     # Accesses the API repeatedly until every result has been recieved.

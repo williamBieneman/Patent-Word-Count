@@ -192,7 +192,7 @@ elif do_choice == 2:
             valid_response = False
     section = input("Would you like to search a specific section? "\
                     "If so, enter the name below. Otherwise, press enter.\n")
-    min_return = input("What would you like to be the minimum number of"\
+    min_return = input("What would you like to be the minimum number of "\
                        "occurances to be recorded?\n")
     counts = {}
     # Prints "counting" and the percent complete just to signal to the user
@@ -222,7 +222,7 @@ elif do_choice == 2:
                         counts[word] += section_counts[word]
                     else:
                         counts.update({word:section_counts[word]})
-        print(f"Counting... {int((number/numbers)*100)}% complete.")
+        print(f"Counting... {int((numbers.index(number)/len(numbers))*100)}% complete.")
     # Sorts the counts in order of greatest to least.
     counts = {k: v for k, v in sorted(counts.items(),\
                                       key=lambda item: item[1], reverse=True)}
