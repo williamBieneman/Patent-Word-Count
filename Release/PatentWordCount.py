@@ -2,7 +2,7 @@ import patent_search as ps
 
 # Welcomes user, gives them options.
 print("""\
-Hello! Welcome to Patent Word Count v1
+Hello! Welcome to Patent Word Count v0.1.0-alpha
 
 This program can:
     • Find patent information
