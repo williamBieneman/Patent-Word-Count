@@ -19,10 +19,17 @@ def search_for(criteria={}):
               'applicant', 'inventor']
               # (also:) 'start', 'rows', 'sortField', 'sortOrder']
     parameters = {}
+    # Checks the quality of the criteria entered.
+    if type(criteria) is dict:
+        pass
+    elif type(criteria) is set:
+        if criteria != {'fields'}:
+            raise TypeError("You must enter a dictionary, or \"{'fields'}\"!")
+    else:
+        raise TypeError("You must enter a dictionary or \"{'fields'}\"!")
     # Will print the fields if search_for({'fields'}) is entered.
     if 'fields' in criteria:
         return fields
-    # Checks the quality of the criteria entered.
     for criterion in criteria:
         if criterion not in fields:
             print(criterion,':',criteria[criterion], 'has been removed from \
@@ -44,7 +51,17 @@ def search_for(criteria={}):
     search_results = requests.get(url)
     search_results.raise_for_status()
     num_found = json.loads(search_results.text)['response']['numFound']
-    print(num_found, 'results found!')
+    # Estimates the time it will take - very rough!
+    est_hou, est_min, est_sec = 0, 0, 0
+    est_sec = int((num_found/100)* 1.2)
+    if est_sec > 60:
+        est_min = int(est_sec/60)
+        est_sec = int(est_sec%est_min)
+    if est_min > 60:
+        est_hou = int(est_min/60)
+        est_min = int(est_min%est_hou)
+    print(f'{num_found} results found! Estimated time: ',\
+          f'{est_hou}:{est_min}:{est_sec}', sep='')
     results = []
     rows = 100
     # Accesses the API repeatedly until every result has been recieved.
@@ -57,8 +74,8 @@ def search_for(criteria={}):
         search_results = json.loads(search_results.text)
         for item in search_results['response']['docs']:
             results.append(item)
-        print(f'Recieved {start} of {num_found} - {int((start/num_found)*100)}\
-        % complete.')
+        print(f'Recieved {start} of {num_found} -',\
+              f'{int((start/num_found)*100)}% complete.')
         start += 100
     print(f'Recieved {num_found} of {num_found} - 100% complete!')
     return results
@@ -141,14 +158,16 @@ def get_patent(*, patent_number=None, document_ID=None, return_fields=False):
     # Adds the description (which is split into many elements in the HTML).
     description = ''
     for y in patent_soup.find(class_='description').descendants:
-    	description.append(y.string)
+        if y.string is None:
+            continue
+        description += str(y.string).replace('\n','') + ' '
     patent.update({'description':description})
     # And finally, adds the claims.
     claims = ''
     for result in patent_soup(class_='claim-text'):
-    	for i in result.contents:
-    		claims.append(i.string)
-    	claims.append('\n')
+        for i in result.contents:
+            claims += str(i.string).replace('\n','') + ' '
+        claims += '\n'
     patent.update({'claims':claims})
     return patent
 
@@ -157,6 +176,8 @@ def count_words(text: str, /, min_return = 0):
     """Counts the number of words in the text, and counts the number of
     instances of each word. min_return sets the minimum number of occurances
     of a word to be recorded and returned."""
+    if type(text) != str:
+        raise TypeError("Your text must be a string!")
     # Takes the entered text and reformats it to be easier to count.
     fixed_text = text.lower()
     punctuation = [
@@ -184,25 +205,27 @@ def count_words(text: str, /, min_return = 0):
     # but I think having it be a dictionary is worth the comlications.
     sorted_word_counts = {}
     for x in sorted(word_counts, reverse = True):
-        sorted_word_counts.update(x, word_counts[x])
-    word_counts = sorted_wourd_counts
+        sorted_word_counts.update({x: word_counts[x]})
+    word_counts = sorted_word_counts
     # This line made more sense when word_counts was a list of tuples,
     # but now it is just finding the first key of word_counts (skipping the
     # total), and finding the value associated with it.
-    most_counted_word = word_counts[word_counts.keys()[1]]
-    # Similarly, this just findes the
-    most_counted_number = word_counts.keys()[1]
+    most_counted_word = word_counts[list(word_counts.keys())[1]]
+    # Similarly, this just finds the highest number
+    most_counted_number = list(word_counts.keys())[1]
     uncounted = []
     if min_return == 0:
         return word_counts
     elif min_return < 0:
         raise ValueError("min_return must be more than 0.")
     elif min_return > 0:
-        for count, word in word_counts:
-            if count >= min_return:
+        for word in word_counts:
+            if word_counts[word] >= min_return:
                 pass
-            elif count < min_return:
-                uncounted.append(word_counts.pop(count))
+            elif word_counts[word] < min_return:
+                uncounted.append(word)
+    for word in uncounted:
+        word_counts.pop(word)
     # I just realized that since the most counted word, its count, and the
     # list of uncouted words aren't returned, setting them is kinda useless,
     # but they may be used in the future, so I'm keeping them in for now.
