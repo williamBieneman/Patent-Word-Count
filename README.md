@@ -11,4 +11,4 @@ Of these, all but bs4 and requests should come installed with Python 3. If not, 
   ```pip install {package}```
 into the command line.
 
-Direct notes to (the Google Form)[https://docs.google.com/forms/d/e/1FAIpQLSdrt2ElYs_GME0ZHIOW23J6LESjMqwwiiO4aYKOfukotMJFUQ/viewform?usp=sf_link]
+Direct notes to [the Google Form](https://docs.google.com/forms/d/e/1FAIpQLSdrt2ElYs_GME0ZHIOW23J6LESjMqwwiiO4aYKOfukotMJFUQ/viewform?usp=sf_link)
