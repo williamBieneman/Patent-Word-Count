@@ -172,6 +172,7 @@ def get_patent(*, patent_number=None, document_ID=None, return_fields=False):
     return patent
 
 ## (adapted from basic word counter.py)
+## Deprecated as of July 20, 2020 with addition of complex_word_count.py
 def count_words(text: str, /, min_return = 0):
     """Counts the number of words in the text, and counts the number of
     instances of each word. min_return sets the minimum number of occurances

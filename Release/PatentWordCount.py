@@ -1,13 +1,17 @@
 import patent_search as ps
+import complex_word_count as wc
 
 # Welcomes user, gives them options.
 print("""\
-Hello! Welcome to Patent Word Count v0.1.0-alpha
+Hello! Welcome to Patent Word Count v0.2.0-alpha
 
 This program can:
     • Find patent information
-    • Find the most used words in a patent
-    • Find patent numbers and other information from given criteria\
+    • Find the most used words in a patent or set of patents
+    • Find patent numbers and other information from given criteria
+    • Find the most used phrases in a patent or set of patents
+    • Find the number of occurances of a given word or phrase in a patent or \
+set of patents.
 
 Remember you can press ctrl+c at any time to end operations.
 """)
@@ -20,7 +24,7 @@ Enter 1, 2, or 3.\n")
     # Response validation:
     try:
         do_choice = int(do_choice)
-        if do_choice in [1, 2, 3]:
+        if do_choice in [1, 2, 3, 4, 5]:
             valid_response = True
         else:
             raise ValueError
@@ -70,21 +74,10 @@ def enter_data():
         else:
             print(f"You have selected \"{selected_field}\".",\
                     "What would you like to set it to?", sep='\n')
-        # More response validation:
-        valid_response = False
-        while valid_response == False:
-            choice = input(f"Set \"{selected_field}\" to: ")
-            while True:
-                print(f"You have chosen to set \"{selected_field}\" to ",\
-                      f"\"{choice}\".")
-                ans = input("Are you sure? (\"y\"/\"n\")\n")
-                if ans == "y":
-                    valid_response = True
-                    break
-                elif ans == "n":
-                    break
-                else:
-                    print("You must enter \"y\" or \"n\".")
+        # Used to check if they were sure about their response, but that was
+        # just annoying, so I removed it. Now it just repeats back their input.
+        print(f"You have chosen to set \"{selected_field}\" to ",\
+              f"\"{choice}\".")
         # Saves their changes:
         criteria.update({selected_field:choice})
         # Asks if they'd like to make more changes.
@@ -207,10 +200,10 @@ elif do_choice == 2:
             continue
         if section != '':
             try:
-                patent_counts = ps.count_words(str(patent[section]))
-                for word in patent_counts:
+                patent_counts = cwc.WordCount(str(patent[section]))
+                for word in patent_counts.word_counts:
                     if word in counts:
-                        counts[word] += patent_counts[word]
+                        counts[word] += patent_counts.word_counts[word]
             except KeyError:
                 print(f"The section \"{section}\" does not exist.")
                 break
@@ -235,7 +228,7 @@ elif do_choice == 2:
         if counts[word] > int(min_return):
             print(f"{word:{max_length}} appears {counts[word]:^6,} times.")
     exit()
-# If the user asked to find numbers etc. ...
+# If the user asked to find numbers etc...
 elif do_choice == 3:
     criteria = enter_data()
     results = ps.search_for(criteria)
@@ -245,7 +238,94 @@ elif do_choice == 3:
         for field in item:
             print(f"{(field+':'):20}{item[field]}")
     exit()
+# If the user asked to find the most used phrases...
+elif do_choice == 4:
+    # This whole thing is basically just a copy of the above equivilant for
+    # words.
+    # Asks if they'd like to search multiple, or just one.
+    valid_response = False
+    while valid_response == False:
+        print("Would you like to use a specific patent,",\
+              "or search for multiple?")
+        do_choice = input("Enter 1, or 2.\n")
+        try:
+            do_choice = int(do_choice)
+            if do_choice == 1:
+                while valid_response == False:
+                    # Asks for patent number - barely validates.
+                    number = input("Please input the number of the patent you'd "\
+                                   "like to use.\n")
+                    if number[:2] != "US":
+                        number = "US" + my_st
+                    if number != "":
+                        numbers = [number]
+                        valid_response = True
+                    else:
+                        print("Please enter a number.")
+            elif do_choice == 2:
+                print("Please enter your criteria: ")
+                criteria = enter_data()
+                numbers = ps.get_numbers(criteria)
+                valid_response = True
+            else:
+                raise ValueError
+        except ValueError:
+            print("Please enter 1 for a specific patent, or 2 to search for",\
+                  "many patents.")
+            valid_response = False
+    section = input("Would you like to search a specific section? "\
+                    "If so, enter the name below. Otherwise, press enter.\n")
+    min_return = input("What would you like to be the minimum number of "\
+                       "occurances to be recorded?\n")
+    counts = {}
+    # Prints "counting" and the percent complete just to signal to the user
+    # that something is happening.
+    print("\nCounting...\n")
+    for number in numbers:
+        try:
+            patent = ps.get_patent(document_ID = number)
+        except:
+            print(f"The patent corresponding to the number {number}",\
+                   "could not be found.")
+            continue
+        if section != '':
+            try:
+                patent_counts = cwc.WordCount(str(patent[section]))
+                for phrase in patent_counts.phrase_counts:
+                    if phrase in counts:
+                        counts[phrase] += patent_counts.phrase_counts[phrase]
+            except KeyError:
+                print(f"The section \"{section}\" does not exist.")
+                break
+        else:
+            for section in patent:
+                section_counts = ps.count_phrases(str(patent[section]))
+                for phrase in section_counts:
+                    if phrase in counts:
+                        counts[phrase] += section_counts[phrase]
+                    else:
+                        counts.update({phrase:section_counts[phrase]})
+        print(f"Counting... {int((numbers.index(number)/len(numbers))*100)}%",
+               "complete.")
+    # Sorts the counts in order of greatest to least.
+    counts = {k: v for k, v in sorted(counts.items(),\
+                                      key=lambda item: item[1], reverse=True)}
+    # Finds the longest phrase... This was oddly difficult lol.
+    max_length = len(max(counts, key = lambda phrase: len([phrase])))
+    for phrase in counts:
+        if phrase == "Total phrases":
+            print(f"{phrase:{max_length}}: {counts[phrase]:<6,}")
+            continue
+        if counts[phrase] > int(min_return):
+            print(f"{phrase:{max_length}} appears {counts[phrase]:^6,} times.")
+    exit()
+# If the user asked to find the number of occurances of a given word or
+# phrase...
+elif do_choice == 5:
+    print("I'm still working on this so that part where I said I could do",
+          "it was a lie...")
+
 else:
     print(f"Your input, \"{do_choice}\", was invalid. Please try again,",\
-           "inputing only 1, 2, or 3.")
+           "inputing only 1, 2, 3, 4, or 5.")
     exit()
